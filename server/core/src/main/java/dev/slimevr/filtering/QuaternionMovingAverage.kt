@@ -44,8 +44,7 @@ class QuaternionMovingAverage(
 			if (amount > 1) {
 				smoothFactor /= amount
 			}
-		}
-		if (type == TrackerFilters.PREDICTION) {
+		} else if (type == TrackerFilters.PREDICTION) {
 			// higher predictFactor = more prediction
 			predictFactor = PREDICT_MULTIPLIER * amount + PREDICT_MIN
 			rotBuffer = CircularArrayList(PREDICT_BUFFER)
@@ -90,9 +89,6 @@ class QuaternionMovingAverage(
 
 			// Smooth towards the target rotation by the slerp factor
 			filteredQuaternion = smoothingQuaternion.interpR(latestQuaternion, amt)
-		} else {
-			// No filtering; just keep track of rotations (for going over 180 degrees)
-			filteredQuaternion = latestQuaternion.twinNearest(smoothingQuaternion)
 		}
 
 		filteringImpact = latestQuaternion.angleToR(filteredQuaternion)
@@ -110,8 +106,6 @@ class QuaternionMovingAverage(
 		} else if (type == TrackerFilters.SMOOTHING) {
 			frameCounter = 0
 			lastAmt = 0f
-			smoothingQuaternion = filteredQuaternion
-		} else {
 			smoothingQuaternion = filteredQuaternion
 		}
 

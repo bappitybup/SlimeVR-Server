@@ -84,6 +84,7 @@ class Tracker @JvmOverloads constructor(
 	private var timeAtLastUpdate: Long = System.currentTimeMillis()
 	private var _rotation = Quaternion.IDENTITY
 	private var _acceleration = Vector3.NULL
+	private val temporalityHandler: QuaternionTemporalityHandler = QuaternionTemporalityHandler()
 	var position = Vector3.NULL
 	val resetsHandler: TrackerResetsHandler = TrackerResetsHandler(this)
 	val filteringHandler: TrackerFilteringHandler = TrackerFilteringHandler()
@@ -317,7 +318,8 @@ class Tracker @JvmOverloads constructor(
 		timer.update()
 		timeAtLastUpdate = System.currentTimeMillis()
 		if (trackRotDirection) {
-			filteringHandler.dataTick(_rotation)
+			temporalityHandler.dataTick(_rotation)
+			filteringHandler.dataTick(temporalityHandler.temporalQuaternion)
 		}
 	}
 
@@ -329,7 +331,11 @@ class Tracker @JvmOverloads constructor(
 	}
 
 	private fun getFilteredRotation(): Quaternion = if (trackRotDirection) {
-		filteringHandler.getFilteredRotation()
+		if (filteringHandler.filteringEnabled) {
+			filteringHandler.getFilteredRotation()
+		} else {
+			temporalityHandler.temporalQuaternion
+		}
 	} else {
 		// Get raw rotation
 		_rotation
@@ -427,6 +433,7 @@ class Tracker @JvmOverloads constructor(
 	 * Call when doing a full reset to reset the tracking of rotations >180 degrees
 	 */
 	fun resetFilteringQuats() {
+		temporalityHandler.reset(_rotation)
 		filteringHandler.resetMovingAverage(_rotation)
 	}
 }
